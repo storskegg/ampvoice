@@ -1,0 +1,40 @@
+{
+  "content": {
+    "invoice_id": "INV100001",
+    "invoice_date": "2026-05-08",
+    "customer": {
+      "name_first": "Kevin",
+      "name_last": "Schafer",
+      "address1": "123 Main St",
+      "address2": "Apt 4B",
+      "city": "Stoughton",
+      "state": "WI",
+      "zip": "53589",
+      "phone": "608-555-1212"
+    },
+    "supplier": {
+      "name": "Acme Widgets",
+      "address1": "456 Supply St",
+      "address2": "",
+      "city": "Madison",
+      "state": "WI",
+      "zip": "53703",
+      "phone": "608-555-3434"
+    },
+    "items": [
+      {
+        "description": "Widget",
+        "quantity": 1,
+        "price_unit": 100.00,
+        "price_total": 100.00,
+        "discount": {
+          "type": "percentage",
+          "value": 0.00
+        }
+      }
+    ],
+    "subtotal": 100.00,
+    "tax": 0.00,
+    "total": 100.00
+  }
+}

@@ -1,0 +1,28 @@
+services:
+  api_service:
+    container_name: api_service
+    image: golang:1.26-alpine
+    build:
+      context: .
+      dockerfile: api-service.dockerfile
+    environment:
+      DATABASE_URL: 'postgres://postgres:postgres@db:5432/postgres?sslmode=disable'
+    ports:
+      - '8000:8000'
+    depends_on:
+      - mariadb_service
+  mariadb_service:
+    image: mariadb:10.6
+    environment:
+      MYSQL_ROOT_PASSWORD: ampvoice123
+      MYSQL_USER: ampvoice123
+      MYSQL_PASSWORD: ampvoice123
+      MYSQL_DATABASE: ampvoice123db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/docker-entrypoint-initdb.d/1.sql
+
+volumes:
+  mariadb_data: {}
+
