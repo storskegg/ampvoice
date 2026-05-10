@@ -11,10 +11,10 @@ COPY . .
 RUN go mod vendor
 
 # Build the Go app
-RUN go build -o api_gorm ./backendgorm
+RUN go build -o api-service ./cmd/api-service
 
 #EXPOSE the port
 EXPOSE 8000
 
 # Run the executable
-CMD ["./api_gorm"]
+CMD ["./api-service"]

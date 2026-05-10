@@ -6,7 +6,10 @@ services:
       context: .
       dockerfile: api-service.dockerfile
     environment:
-      DATABASE_URL: 'postgres://postgres:postgres@db:5432/postgres?sslmode=disable'
+      MYSQL_ROOT_PASSWORD: ampvoice123
+      MYSQL_USER: ampvoice123
+      MYSQL_PASSWORD: ampvoice123
+      MYSQL_DATABASE: ampvoice123db
     ports:
       - '8000:8000'
     depends_on:

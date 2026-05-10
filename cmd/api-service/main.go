@@ -3,8 +3,10 @@ package main
 import (
     "context"
     "encoding/json"
+    "fmt"
     "log"
     "net/http"
+    "os"
 
     "github.com/gorilla/mux"
     "github.com/storskegg/ampvoice/internal/dbModels"
@@ -12,18 +14,38 @@ import (
     "gorm.io/gorm"
 )
 
+var (
+    mysqlUsername = ""
+    mysqlPassword = ""
+    mysqlDatabase = ""
+    mysqlHost     = "mariadb_service"
+    mysqlPort     = "3306"
+)
+
+func init() {
+    var ok bool
+    mysqlUsername, ok = os.LookupEnv("MYSQL_USER")
+    if !ok {
+        log.Fatal("MYSQL_USER environment variable not set")
+    }
+    mysqlPassword, ok = os.LookupEnv("MYSQL_PASSWORD")
+    if !ok {
+        log.Fatal("MYSQL_PASSWORD environment variable not set")
+    }
+    mysqlDatabase, ok = os.LookupEnv("MYSQL_DATABASE")
+    if !ok {
+        log.Fatal("MYSQL_DATABASE environment variable not set")
+    }
+}
+
 func main() {
     log.Println("Starting server...")
-    dsn := "host=localhost user=postgres password=postgres dbname=postgres port=5432 sslmode=disable TimeZone=America/Chicago"
 
     log.Println("Connecting to database...")
-    db, err := gorm.Open(mysql.New(mysql.Config{
-        DSN: dsn,
-        //PreferSimpleProtocol: true,
-    }), &gorm.Config{})
-
+    dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysqlUsername, mysqlPassword, mysqlHost, mysqlPort, mysqlDatabase)
+    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
     if err != nil {
-        log.Fatal(err)
+        log.Fatalf("Failed to connect to database: %s", err.Error())
     }
     log.Println("Database connection established")
 
@@ -38,17 +60,7 @@ func main() {
     log.Println("Database migrated")
 
     log.Println("Creating initial part data...")
-    err = gorm.G[dbModels.Parts](db).Create(ctx, &dbModels.Parts{
-        Category: "Passives",
-        Type:     "Capacitor",
-        Subtype:  "Electrolytic",
-        Brand:    "Jupiter",
-        Series:   "Cosmos",
-        Value:    "100 uF",
-        Rating:   "100 V",
-        CostUnit: 9.49,
-        CostMult: 1.75,
-    })
+    err = gorm.G[dbModels.Parts](db).Create(ctx, dbModels.SamplePart())
     if err != nil {
         log.Fatal(err)
     }
