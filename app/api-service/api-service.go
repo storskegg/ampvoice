@@ -3,17 +3,12 @@ package api_service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
-	"github.com/segmentio/encoding/json"
 	"github.com/spf13/cobra"
-	"github.com/storskegg/ampvoice/internal/dbModels"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 )
 
 var (
@@ -46,23 +41,9 @@ func Run() error {
 func runRootE(cmd *cobra.Command, args []string) error {
 	log.Info().Msg("Starting server...")
 
-	log.Info().Msg("Connecting to database...")
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", mysqlUsername, mysqlPassword, mysqlHost, mysqlPort, mysqlDatabase)
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to database")
-	}
-	log.Info().Msg("Database connection established")
-
 	ctx := context.Background()
 
-	log.Info().Msg("Migrating database...")
-	// Migrate the schema
-	err = dbModels.MigrateModels(db)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Unable to migrate database")
-	}
-	log.Info().Msg("Database migrated")
+	db := newDatabase()
 
 	log.Info().Msg("Starting server...")
 	router := mux.NewRouter()
@@ -71,8 +52,7 @@ func runRootE(cmd *cobra.Command, args []string) error {
 	// wrap the router with CORS and JSON content type middlewares
 	enhancedRouter := enableCORS(jsonContentTypeMiddleware(router))
 	// start server
-	err = http.ListenAndServe(":8000", enhancedRouter)
-	if err != nil {
+	if err := http.ListenAndServe(":8000", enhancedRouter); err != nil {
 		log.Fatal().Err(err).Msg("Failed to start server")
 	}
 
@@ -105,22 +85,6 @@ func jsonContentTypeMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func getParts(ctx context.Context, db *gorm.DB) http.HandlerFunc {
-	parts, err := gorm.G[dbModels.Part](db).Find(ctx) // find product with integer primary key
-	if err != nil {
-		log.Printf("Failed to find product: %s", err.Error())
-		return func(w http.ResponseWriter, r *http.Request) {
-			http.Error(w, "Product not found", http.StatusNotFound)
-		}
-	}
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := json.NewEncoder(w).Encode(parts); err != nil {
-			log.Error().Err(err).Msg("Failed to encode product")
-			http.Error(w, "Failed to encode product", http.StatusInternalServerError)
-		}
-	}
-}
-
 func initializeConfig(cmd *cobra.Command) error {
 	var ok bool
 	mysqlUsername, ok = os.LookupEnv("MYSQL_USER")
@@ -146,5 +110,6 @@ func initializeConfig(cmd *cobra.Command) error {
 	if !ok || mysqlPort == "" {
 		return errors.Join(errMissingEnvironmentVariable, errors.New("MYSQL_PORT"))
 	}
+
 	return nil
 }
