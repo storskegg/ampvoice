@@ -10,6 +10,8 @@ services:
       MYSQL_USER: ampvoice123
       MYSQL_PASSWORD: ampvoice123
       MYSQL_DATABASE: ampvoice123db
+      MYSQL_HOST: mariadb_service
+      MYSQL_PORT: 3306
     ports:
       - '8000:8000'
     depends_on:
