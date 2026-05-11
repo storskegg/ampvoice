@@ -3,7 +3,7 @@ module github.com/storskegg/ampvoice
 go 1.26.3
 
 require (
-	github.com/gorilla/mux v1.8.1
+	github.com/go-chi/chi/v5 v5.2.5
 	github.com/rs/zerolog v1.35.1
 	github.com/segmentio/encoding v0.5.4
 	github.com/spf13/cobra v1.10.2

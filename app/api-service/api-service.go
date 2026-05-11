@@ -5,8 +5,10 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +30,6 @@ var cmdRoot = cobra.Command{
 	Short: "API service",
 	Long:  "API service",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
 		return initializeConfig(cmd)
 	},
 	RunE: runRootE,
@@ -46,11 +47,19 @@ func runRootE(cmd *cobra.Command, args []string) error {
 	db := newDatabase()
 
 	log.Info().Msg("Starting server...")
-	router := mux.NewRouter()
-	router.HandleFunc("/api/parts", getParts(ctx, db)).Methods("GET")
+	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
+
+	r.Route("/api", func(r chi.Router) {
+		r.Get("/parts", getParts(ctx, db))
+	})
 
 	// wrap the router with CORS and JSON content type middlewares
-	enhancedRouter := enableCORS(jsonContentTypeMiddleware(router))
+	enhancedRouter := enableCORS(jsonContentTypeMiddleware(r))
 	// start server
 	if err := http.ListenAndServe(":8000", enhancedRouter); err != nil {
 		log.Fatal().Err(err).Msg("Failed to start server")
